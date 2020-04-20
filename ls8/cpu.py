@@ -2,12 +2,19 @@
 
 import sys
 
+LDI = 0b10000010
+PRN = 0b01000111
+HLT = 0b00000001
+
+
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.pc = 0
+        self.ram = [0] * 256
+        self.reg = [0] * 8
 
     def load(self):
         """Load a program into memory."""
@@ -18,12 +25,12 @@ class CPU:
 
         program = [
             # From print8.ls8
-            0b10000010, # LDI R0,8
+            LDI, # LDI R0,8
             0b00000000,
             0b00001000,
-            0b01000111, # PRN R0
+            PRN, # PRN R0
             0b00000000,
-            0b00000001, # HLT
+            HLT, # HLT
         ]
 
         for instruction in program:
@@ -60,6 +67,33 @@ class CPU:
 
         print()
 
+    def ram_read(self, mar):
+        return self.ram[mar]
+
+    def ram_write(self, mdr, mar):
+        self.ram[mar] = mdr
+
+
     def run(self):
         """Run the CPU."""
-        pass
+        halt = False
+
+        while not halt:
+            instruction = self.ram[self.pc]
+
+            if instruction == LDI:
+                reg_num = self.ram_read(self.pc + 1)
+                value = self.ram_read(self.pc + 2)
+                self.reg[reg_num] = value
+                self.pc += 3
+            elif instruction == PRN:
+                reg_num = self.ram_read(self.pc + 1)
+                print(self.reg[reg_num])
+                self.pc += 2
+            elif instruction == HLT:
+                # halt == True
+                # self.pc += 1
+                sys.exit(0)
+            else:
+                print("Unknown instruction")
+                sys.exit(1)
