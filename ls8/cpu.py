@@ -15,11 +15,18 @@ class CPU:
         self.pc = 0
         self.ram = [0] * 256
         self.reg = [0] * 8
+        self.SP = 7
+        self.reg[self.SP] = 0xF4
         self.instruction = {
             0b00000001: self.HLT,
             0b10000010: self.LDI,
             0b01000111: self.PRN,
-            0b10100010: self.MUL
+            0b10100010: self.MUL,
+            0b01000101: self.push,
+            0b01000110: self.pop,
+            0b10100000: self.add,
+            0b01010000: self.call,
+            0b00010001: self.ret
         }
 
     def HLT(self, op1, op2):
@@ -36,6 +43,20 @@ class CPU:
     def MUL(self, op1, op2):
         self.alu("MUL", op1, op2)
         return (3, True)
+
+    def add(self, op1, op2):
+        self.alu('ADD', op1, op2)
+        return (3, True)
+
+    def call(self, op1, op2):
+        self.SP -= 1
+        self.ram[self.SP] = self.pc + 2
+        self.pc = self.reg[op1]
+        return (0, True)
+
+    def ret(self, op1, op2):
+        self.pc = self.ram[self.SP]
+        return (0, True)
 
     def load(self, program):
         """Load a program into memory."""
@@ -110,6 +131,15 @@ class CPU:
     def ram_write(self, mdr, mar):
         self.ram[mar] = mdr
 
+    def push(self, op1, op2):
+        self.reg[self.SP] -= 1
+        self.ram[self.reg[self.SP]] = self.reg[op1]
+        return (2, True)
+
+    def pop(self, op1, op2):
+        self.reg[op1] = self.ram[self.reg[self.SP]]
+        self.reg[self.SP] += 1
+        return (2, True)
 
     def run(self):
         """Run the CPU."""
