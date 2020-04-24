@@ -16,6 +16,10 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.SP = 7
+        self.fl = 5
+        self.l = 0
+        self.g = 0
+        self.e = 0
         self.reg[self.SP] = 0xF4
         self.instruction = {
             0b00000001: self.HLT,
@@ -26,7 +30,11 @@ class CPU:
             0b01000110: self.pop,
             0b10100000: self.add,
             0b01010000: self.call,
-            0b00010001: self.ret
+            0b00010001: self.ret,
+            0b10100111: self.CMP,
+            0b01010100: self.JMP,
+            0b01010101: self.JEQ,
+            0b01010110: self.JNE
         }
 
     def HLT(self, op1, op2):
@@ -57,6 +65,29 @@ class CPU:
     def ret(self, op1, op2):
         self.pc = self.ram[self.SP]
         return (0, True)
+
+    def CMP(self, op1, op2):
+        self.alu("CMP", op1, op2)
+        return (3, True)
+
+    def JMP(self, op1, op2):
+        self.pc = self.reg[op1]
+        return (0, True)
+
+    def JEQ(self, op1, op2):
+        if self.e == 1:
+            self.pc = self.reg[op1]
+            return (0, True)
+        else:
+            return (2, True)
+
+    def JNE(self, op1, op2):
+        if self.e == 0:
+            self.pc = self.reg[op1]
+            return (0, True)
+        else:
+            return(2, True)
+
 
     def load(self, program):
         """Load a program into memory."""
@@ -102,6 +133,19 @@ class CPU:
         #elif op == "SUB": etc
         elif op == "MUL":
             self.reg[reg_a] = (self.reg[reg_a] * self.reg[reg_b])
+        elif op == "CMP":
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.e = 1
+                self.l = 0
+                self.g = 0
+            elif self.reg[reg_a] <= self.reg[reg_b]:
+                self.e = 0
+                self.l = 1
+                self.g = 0
+            else:
+                self.e = 0
+                self.l = 0
+                self.g = 1
         else:
             raise Exception("Unsupported ALU operation")
 
